@@ -33,22 +33,28 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
 
-      const db = client.db('smartLearn');
-      const tutorCollection = db.collection('tutors');
-    
-      app.post('/tutors', async (req, res) => {
-          console.log(req.body);
-          const tutor = req.body;         
-          const data = await tutorCollection.insertOne(tutor);
-          res.send(data);
-      });
+    const db = client.db('smartLearn');
+    const tutorCollection = db.collection('tutors');
 
-      app.get('/tutors', async (req, res) => {
-          const tutor = tutorCollection.find();
-          const filter = await tutor.toArray();
-          res.send(filter);
-      })
-      
+    app.post('/tutors', async (req, res) => {
+      console.log(req.body);
+      const tutor = req.body;
+      const data = await tutorCollection.insertOne(tutor);
+      res.send(data);
+    });
+
+    app.get('/tutors', async (req, res) => {
+      const tutor = tutorCollection.find();
+      const filter = await tutor.toArray();
+      res.send(filter);
+    })
+    app.get('/tutors/:language', async (req, res) => {
+      const language = req.params.language;
+      const tutor = tutorCollection.find({language});
+      const filter = await tutor.toArray();
+      res.send(filter);
+    })
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
@@ -61,10 +67,10 @@ run().catch(console.dir);
 
 
 app.get('/', async (req, res) => {
-    res.send('Hello Express');
+  res.send('Hello Express');
 });
 
 
 app.listen(port, function () {
-    console.log(`Server is running at PORT: ${port}`);
+  console.log(`Server is running at PORT: ${port}`);
 });
