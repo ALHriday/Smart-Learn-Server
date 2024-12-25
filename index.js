@@ -34,12 +34,17 @@ async function run() {
 
     const db = client.db('smartLearn');
     const tutorCollection = db.collection('tutors');
+    const bookedTutorCollection = db.collection('bookedTutor');
 
+    // Tutor Collection
     app.post('/tutors', async (req, res) => {
       const tutor = req.body;
       const data = await tutorCollection.insertOne(tutor);
       res.send(data);
     });
+
+
+
 
     app.get('/tutors', async (req, res) => {
       const tutor = tutorCollection.find();
@@ -59,6 +64,21 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const tutor = await tutorCollection.findOne(query);
       res.send(tutor);
+    });
+
+    // Booked Tutor Collection
+    app.post('/bookedTutor', async (req, res) => {
+      const bookTutor = req.body;
+      console.log(bookTutor);
+
+      const data = await bookedTutorCollection.insertOne(bookTutor);
+      res.send(data);
+    });
+
+    app.get('/bookedTutor', async (req, res) => {
+      const bookedTutor = bookedTutorCollection.find();
+      const filter = await bookedTutor.toArray();
+      res.send(filter);
     });
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
