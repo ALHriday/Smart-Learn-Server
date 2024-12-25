@@ -36,7 +36,6 @@ async function run() {
     const tutorCollection = db.collection('tutors');
 
     app.post('/tutors', async (req, res) => {
-      console.log(req.body);
       const tutor = req.body;
       const data = await tutorCollection.insertOne(tutor);
       res.send(data);
@@ -48,18 +47,18 @@ async function run() {
       res.send(filter);
     });
 
+    app.get('/tutors/category/:language', async (req, res) => {
+      const language = req.params.language;
+      const tutor = tutorCollection.find({ language });
+      const filter = await tutor.toArray();
+      res.send(filter);
+    });
+
     app.get('/tutors/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const tutor = await tutorCollection.findOne(query);
       res.send(tutor);
-    });
-
-    app.get('/tutors/:language', async (req, res) => {
-      const language = req.params.language;
-      const tutor = tutorCollection.find({ language });
-      const filter = await tutor.toArray();
-      res.send(filter);
     });
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -69,7 +68,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
 
 
 app.get('/', async (req, res) => {
