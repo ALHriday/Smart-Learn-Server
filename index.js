@@ -5,6 +5,11 @@ const cors = require('cors');
 const port = process.env.PORT || 5050;
 const app = express();
 
+// app.use(cors({
+//   origin: ['http://localhost:5173',
+//     'https://smart-learn-online-tutor.netlify.app'],
+//   optionsSuccessStatus: 200
+// }));
 app.use(cors());
 app.use(express.json());
 
@@ -35,6 +40,7 @@ async function run() {
     const db = client.db('smartLearn');
     const tutorCollection = db.collection('tutors');
     const bookedTutorCollection = db.collection('bookedTutor');
+    const tutorialsCollection = db.collection('tutorials');
 
     // Tutor Collection
     app.post('/tutors', async (req, res) => {
@@ -42,8 +48,6 @@ async function run() {
       const data = await tutorCollection.insertOne(tutor);
       res.send(data);
     });
-
-
 
 
     app.get('/tutors', async (req, res) => {
@@ -66,11 +70,30 @@ async function run() {
       res.send(tutor);
     });
 
+    app.put('/tutors/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateTutorials = req.body;
+      console.log(updateTutorials);
+      
+      const tutorials = {
+        // name, language, image, price, review, details
+          $set: {
+              name: updateTutorials.name,
+              language: updateTutorials.language,
+              image: updateTutorials.image,
+              price: updateTutorials.price,
+              details: updateTutorials.details
+          }
+      }
+      const result = await tutorCollection.updateOne(filter, tutorials, options);
+      res.send(result);
+    })
+
     // Booked Tutor Collection
     app.post('/bookedTutor', async (req, res) => {
       const bookTutor = req.body;
-      console.log(bookTutor);
-
       const data = await bookedTutorCollection.insertOne(bookTutor);
       res.send(data);
     });
@@ -78,6 +101,15 @@ async function run() {
     app.get('/bookedTutor', async (req, res) => {
       const bookedTutor = bookedTutorCollection.find();
       const filter = await bookedTutor.toArray();
+      res.send(filter);
+    });
+
+    // UserTutorials Collection
+
+    app.get('/tutorials/:userEmail', async (req, res) => {
+      const userEmail = req.params.userEmail;
+      const tutorials = tutorCollection.find({ userEmail });
+      const filter = await tutorials.toArray();
       res.send(filter);
     });
 
