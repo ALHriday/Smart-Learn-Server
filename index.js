@@ -12,7 +12,7 @@ const user = process.env.DB_USER
 const pass = process.env.DB_PASS
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${user}:${pass}@cluster0.lgngp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -23,7 +23,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
 
 
 async function run() {
@@ -47,13 +46,21 @@ async function run() {
       const tutor = tutorCollection.find();
       const filter = await tutor.toArray();
       res.send(filter);
-    })
+    });
+
+    app.get('/tutors/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const tutor = await tutorCollection.findOne(query);
+      res.send(tutor);
+    });
+
     app.get('/tutors/:language', async (req, res) => {
       const language = req.params.language;
-      const tutor = tutorCollection.find({language});
+      const tutor = tutorCollection.find({ language });
       const filter = await tutor.toArray();
       res.send(filter);
-    })
+    });
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
@@ -65,9 +72,8 @@ run().catch(console.dir);
 
 
 
-
 app.get('/', async (req, res) => {
-  res.send('Hello Express');
+  res.send('SmartLearn online tutor platform');
 });
 
 
