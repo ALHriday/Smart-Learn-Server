@@ -6,15 +6,14 @@ const port = process.env.PORT || 5050;
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:5173',
-    'https://smart-learn-online-tutor.netlify.app'],
-  credentials: true
+  origin: ['https://smart-learn-online-tutor.netlify.app', 'http://localhost:5173'],
+  credentials: true,
 }));
 // app.use(cors());
 app.use(express.json());
 
-const user = process.env.DB_USER
-const pass = process.env.DB_PASS
+const user = process.env.DB_USER;
+const pass = process.env.DB_PASS;
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -63,7 +62,7 @@ async function run() {
       res.send(filter);
     });
 
-    app.get('/tutors/:id', async (req, res) => {
+    app.get('/tutors/tutor/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const tutor = await tutorCollection.findOne(query);
@@ -76,20 +75,27 @@ async function run() {
       const options = { upsert: true };
       const updateTutorials = req.body;
       console.log(updateTutorials);
-      
+
       const tutorials = {
         // name, language, image, price, review, details
-          $set: {
-              name: updateTutorials.name,
-              language: updateTutorials.language,
-              image: updateTutorials.image,
-              price: updateTutorials.price,
-              details: updateTutorials.details
-          }
+        $set: {
+          name: updateTutorials.name,
+          language: updateTutorials.language,
+          image: updateTutorials.image,
+          price: updateTutorials.price,
+          details: updateTutorials.details
+        }
       }
       const result = await tutorCollection.updateOne(filter, tutorials, options);
       res.send(result);
-    })
+    });
+
+    app.delete('/tutors/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const tutor = await tutorCollection.deleteOne(query);
+      res.send(tutor);
+    });
 
     // Booked Tutor Collection
     app.post('/bookedTutor', async (req, res) => {
@@ -102,6 +108,19 @@ async function run() {
       const bookedTutor = bookedTutorCollection.find();
       const filter = await bookedTutor.toArray();
       res.send(filter);
+    });
+    app.get('/bookedTutor/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const tutor = await bookedTutorCollection.findOne(query);
+      res.send(tutor);
+    });
+
+    app.delete('/bookedTutor/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const tutor = await bookedTutorCollection.deleteOne(query);
+      res.send(tutor);
     });
 
     // UserTutorials Collection
