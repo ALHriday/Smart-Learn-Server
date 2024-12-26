@@ -5,12 +5,12 @@ const cors = require('cors');
 const port = process.env.PORT || 5050;
 const app = express();
 
-// app.use(cors({
-//   origin: ['http://localhost:5173',
-//     'https://smart-learn-online-tutor.netlify.app'],
-//   optionsSuccessStatus: 200
-// }));
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173',
+    'https://smart-learn-online-tutor.netlify.app'],
+  credentials: true
+}));
+// app.use(cors());
 app.use(express.json());
 
 const user = process.env.DB_USER
@@ -56,7 +56,7 @@ async function run() {
       res.send(filter);
     });
 
-    app.get('/tutors/category/:language', async (req, res) => {
+    app.get('/tutors/:language', async (req, res) => {
       const language = req.params.language;
       const tutor = tutorCollection.find({ language });
       const filter = await tutor.toArray();
