@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors({
   origin: ['https://smart-learn-online-tutor.netlify.app', 'http://localhost:5173'],
-  credentials: true,
+  // credentials: true,
 }));
 // app.use(cors());
 app.use(express.json());
@@ -121,6 +121,12 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const tutor = await bookedTutorCollection.deleteOne(query);
       res.send(tutor);
+    });
+
+    app.get('/addedTutor/:email', async (req, res) => {
+      const email = req.params.email;
+      const bookedTutor = await bookedTutorCollection.find({ email }).toArray();
+      res.send(bookedTutor);
     });
 
     // UserTutorials Collection
