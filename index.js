@@ -63,7 +63,7 @@ async function run() {
           return res.send(tutor);
         }
       } catch (error) {
-        return res.status(500).send({ message: 'Server Error.' });
+        return res.status(500).send({ message: 'Server Error.'});
       }
     });
 
