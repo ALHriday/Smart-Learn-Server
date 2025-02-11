@@ -9,7 +9,7 @@ app.use(cors({
   origin: ['https://smart-learn-online-tutor.netlify.app', 'http://localhost:5173'],
   // credentials: true,
 }));
-// app.use(cors());
+app.use(cors());
 app.use(express.json());
 
 const user = process.env.DB_USER;
@@ -50,19 +50,31 @@ async function run() {
 
 
     app.get('/tutors', async (req, res) => {
-      const tutor = tutorCollection.find();
-      const filter = await tutor.toArray();
-      res.send(filter);
-    });
+      // const language = req.params.language;
+      const { language } = req.query;
 
-    app.get('/tutors/:language', async (req, res) => {
-      const language = req.params.language;
-      const tutor = tutorCollection.find({ language });
-      const filter = await tutor.toArray();
-      res.send(filter);
+      try {
+        if (!language) {
+          const tutor = await tutorCollection.find().toArray();
+          return res.send(tutor);
+
+        } else {
+          const tutor = await tutorCollection.find({ language: { $regex: new RegExp(language, 'i') }}).toArray();
+          return res.send(tutor);
+        }
+      } catch (error) {
+        return res.status(500).send({ message: 'Server Error.' });
+      }
     });
 
     app.get('/tutors/tutor/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const tutor = await tutorCollection.findOne(query);
+      res.send(tutor);
+    });
+
+    app.get('/tutors/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const tutor = await tutorCollection.findOne(query);
