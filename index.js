@@ -48,24 +48,29 @@ async function run() {
       res.send(data);
     });
 
-
     app.get('/tutors', async (req, res) => {
-      // const language = req.params.language;
-      const { language } = req.query;
-
-      try {
-        if (!language) {
-          const tutor = await tutorCollection.find().toArray();
-          return res.send(tutor);
-
-        } else {
-          const tutor = await tutorCollection.find({ language: { $regex: new RegExp(language, 'i') }}).toArray();
-          return res.send(tutor);
-        }
-      } catch (error) {
-        return res.status(500).send({ message: 'Server Error.'});
-      }
+      const tutor = await tutorCollection.find().toArray();
+      return res.send(tutor);
     });
+
+    // app.get('/tutors', async (req, res) => {
+    //   const { language, name } = req.query;
+
+    //   try {
+    //     if (!language || !name) {
+    //       const tutor = await tutorCollection.find().toArray();
+    //       return res.send(tutor);
+    //     } else {
+    //       const tutor = await tutorCollection.find({
+    //         language: { $regex: new RegExp(language, 'i') },
+    //         name: { $regex: new RegExp(name, 'i') }
+    //       }).toArray();
+    //       return res.send(tutor);
+    //     }
+    //   } catch (error) {
+    //     return res.status(500).send({ message: 'Server Error.'});
+    //   }
+    // });
 
     app.get('/tutors/tutor/:id', async (req, res) => {
       const id = req.params.id;
