@@ -7,9 +7,9 @@ const app = express();
 
 app.use(cors({
   origin: ['https://smart-learn-online-tutor.netlify.app', 'http://localhost:5173'],
-  // credentials: true,
+ credentials: true,
 }));
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 
 const user = process.env.DB_USER;
@@ -40,6 +40,7 @@ async function run() {
     const tutorCollection = db.collection('tutors');
     const bookedTutorCollection = db.collection('bookedTutor');
     const tutorialsCollection = db.collection('tutorials');
+    const tutorApplicationCollection = db.collection('tutorApplication');
 
     // Tutor Collection
     app.post('/tutors', async (req, res) => {
@@ -51,6 +52,40 @@ async function run() {
     app.get('/tutors', async (req, res) => {
       const tutor = await tutorCollection.find().toArray();
       return res.send(tutor);
+    });
+
+    app.post('/tutorApplication', async (req, res) => {
+      const application = req.body;
+      const applicationData = await tutorApplicationCollection.insertOne(application);
+      return res.send(applicationData);
+    });
+
+    app.get('/tutorApplication', async (req, res) => {
+      const applicationData = await tutorApplicationCollection.find().toArray();
+      return res.send(applicationData);
+    });
+
+    app.get('/tutorApplication/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const applicationData = await tutorApplicationCollection.findOne(query);
+      res.send(applicationData);
+    });
+
+    app.put('/tutorApplication/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateApplication = req.body;
+      
+      const update = {
+        $set: {
+          status: updateApplication.status,
+          role: updateApplication.role,
+        }
+      }
+      const result = await tutorApplicationCollection.updateOne(filter, update, options);
+      res.send(result);
     });
 
     // app.get('/tutors', async (req, res) => {
@@ -91,7 +126,6 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateTutorials = req.body;
-      console.log(updateTutorials);
 
       const tutorials = {
         // name, language, image, price, review, details
