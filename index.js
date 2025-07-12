@@ -54,6 +54,39 @@ async function run() {
       return res.send(tutor);
     });
 
+    //Tutor Like collection 
+
+    app.get('/tutors/likes', async (req, res) => {
+      const tutor = req.body;
+      const data = await tutorCollection.find(tutor).toArray();
+      res.send(data);
+    });
+
+    app.get('/tutors/likes/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const tutor = await tutorCollection.findOne(query);
+      return res.send(tutor);
+    });
+
+    app.put('/tutors/likes/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateLikes = req.body;
+      
+      const update = {
+        $set: {
+          likes: updateLikes.likes,
+        }
+      }
+      const result = await tutorCollection.updateOne(filter, update, options);
+      res.send(result);
+    });
+
+
+    // Tutor Aplication API
+
     app.post('/tutorApplication', async (req, res) => {
       const application = req.body;
       const applicationData = await tutorApplicationCollection.insertOne(application);
@@ -188,6 +221,7 @@ async function run() {
       const filter = await tutorials.toArray();
       res.send(filter);
     });
+
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
