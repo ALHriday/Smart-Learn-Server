@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors({
   origin: ['https://smart-learn-online-tutor.netlify.app', 'http://localhost:5173'],
- credentials: true,
+  credentials: true,
 }));
 // app.use(cors());
 app.use(express.json());
@@ -50,9 +50,46 @@ async function run() {
     });
 
     app.get('/tutors', async (req, res) => {
-      const tutor = await tutorCollection.find().toArray();
-      return res.send(tutor);
+
+      // For pagination
+      const { search = '' } = req.query;
+      const skip = parseInt(req.query.skip) || 0;
+      const regex = new RegExp(search, "i");
+
+      try {
+        // const limit = parseInt(req.query.limit) || 10;
+        if (search) {
+          const tutor = await tutorCollection.find({ language: { $regex: regex } }).limit(10).skip(skip).toArray();
+          return res.send(tutor);
+        } else {
+          const tutor = await tutorCollection.find().limit(10).skip(0).toArray();
+          return res.send(tutor);
+        }
+      } catch (error) {
+        return res.status(500).send({ error: error.message });
+      }
     });
+
+    app.get('/stats', async (req, res) => {
+      try {
+        const tutorLen = await tutorCollection.estimatedDocumentCount();
+        const stats = await tutorCollection.aggregate([
+          {
+            $group: {
+              _id: "$language",
+            }
+          },
+          {
+            $project: { _id: 0, language: "$_id" }
+          },
+          { $sort: { language: 1 } }
+        ]).toArray();
+        return res.status(200).send({ tutorLen: tutorLen, languages: stats?.map(lang => lang.language) });
+
+      } catch {
+        return res.status(500).send({ message: 'Mongodb server error!' })
+      }
+    })
 
     //Tutor Like collection 
 
@@ -74,7 +111,7 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateLikes = req.body;
-      
+
       const update = {
         $set: {
           likes: updateLikes.likes,
@@ -85,7 +122,7 @@ async function run() {
     });
 
 
-    // Tutor Aplication API
+    // Tutor Application API
 
     app.post('/tutorApplication', async (req, res) => {
       const application = req.body;
@@ -110,7 +147,7 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateApplication = req.body;
-      
+
       const update = {
         $set: {
           status: updateApplication.status,
@@ -120,25 +157,6 @@ async function run() {
       const result = await tutorApplicationCollection.updateOne(filter, update, options);
       res.send(result);
     });
-
-    // app.get('/tutors', async (req, res) => {
-    //   const { language, name } = req.query;
-
-    //   try {
-    //     if (!language || !name) {
-    //       const tutor = await tutorCollection.find().toArray();
-    //       return res.send(tutor);
-    //     } else {
-    //       const tutor = await tutorCollection.find({
-    //         language: { $regex: new RegExp(language, 'i') },
-    //         name: { $regex: new RegExp(name, 'i') }
-    //       }).toArray();
-    //       return res.send(tutor);
-    //     }
-    //   } catch (error) {
-    //     return res.status(500).send({ message: 'Server Error.'});
-    //   }
-    // });
 
     app.get('/tutors/tutor/:id', async (req, res) => {
       const id = req.params.id;
@@ -183,9 +201,13 @@ async function run() {
 
     // Booked Tutor Collection
     app.post('/bookedTutor', async (req, res) => {
-      const bookTutor = req.body;
-      const data = await bookedTutorCollection.insertOne(bookTutor);
-      res.send(data);
+      try {
+        const bookTutor = req.body;
+        const data = await bookedTutorCollection.insertOne(bookTutor);
+        return res.status(200).send(data);
+      } catch {
+        return res.status(500).send({ message: 'Server Error' });
+      }
     });
 
     app.get('/bookedTutor', async (req, res) => {
