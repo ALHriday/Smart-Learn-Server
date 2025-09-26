@@ -54,10 +54,7 @@ async function run() {
       // For pagination
       const { search, skip } = req.query;
 
-
       try {
-        // const limit = parseInt(req.query.limit) || 10;
-        // const regex = new RegExp(search, "i");
         const skipNum = parseInt(skip) || 0;
 
         if (skipNum) {
