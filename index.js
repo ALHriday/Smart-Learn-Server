@@ -52,16 +52,22 @@ async function run() {
     app.get('/tutors', async (req, res) => {
 
       // For pagination
-      const { search = '' } = req.query;
-      const skip = parseInt(req.query.skip) || 0;
-      const regex = new RegExp(search, "i");
+      const { search, skip } = req.query;
+
 
       try {
         // const limit = parseInt(req.query.limit) || 10;
-        if (search) {
-          const tutor = await tutorCollection.find({ language: { $regex: regex } }).limit(10).skip(skip).toArray();
+        // const regex = new RegExp(search, "i");
+        const skipNum = parseInt(skip) || 0;
+
+        if (skipNum) {
+          const tutor = await tutorCollection.find().limit(10).skip(skipNum).toArray();
           return res.send(tutor);
-        } else {
+        } else if (search) {
+          const tutor = await tutorCollection.find({ language: { $regex: `${search}`, $options: 'i' } }).limit(10).skip(skipNum).toArray();
+          return res.send(tutor);
+        }
+        else {
           const tutor = await tutorCollection.find().limit(10).skip(0).toArray();
           return res.send(tutor);
         }
