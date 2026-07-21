@@ -9,7 +9,7 @@ app.use(cors({
   origin: ['https://smart-learn-online-tutor.netlify.app', 'http://localhost:5173'],
   credentials: true,
 }));
-// app.use(cors());
+
 app.use(express.json());
 
 const user = process.env.DB_USER;
@@ -41,6 +41,7 @@ async function run() {
     const bookedTutorCollection = db.collection('bookedTutor');
     const tutorialsCollection = db.collection('tutorials');
     const tutorApplicationCollection = db.collection('tutorApplication');
+    const tutorRatingCollection = db.collection('tutorRating');
 
     // Tutor Collection
     app.post('/tutors', async (req, res) => {
@@ -52,20 +53,22 @@ async function run() {
     app.get('/tutors', async (req, res) => {
 
       // For pagination
-      const { search, skip } = req.query;
+      const { search, page, limit } = req.query;
 
       try {
-        const skipNum = parseInt(skip) || 0;
+        const limitNum = parseInt(limit);
+        const skip = (parseInt(page) - 1) * limitNum;
+        // const searchLang = search.trim();
 
-        if (skipNum) {
-          const tutor = await tutorCollection.find().limit(10).skip(skipNum).toArray();
+        if (search) {
+          const tutor = await tutorCollection.find({ language: { $regex: `${search || ''}`, $options: 'i' } }).limit(limitNum).skip(skip).toArray();
           return res.send(tutor);
-        } else if (search) {
-          const tutor = await tutorCollection.find({ language: { $regex: `${search}`, $options: 'i' } }).limit(10).skip(skipNum).toArray();
+        } else if (0 < skip || limitNum) {
+
+          const tutor = await tutorCollection.find().limit(limitNum).skip(skip).toArray();
           return res.send(tutor);
-        }
-        else {
-          const tutor = await tutorCollection.find().limit(10).skip(0).toArray();
+        } else {
+          const tutor = await tutorCollection.find().limit(limitNum).skip(skip).toArray();
           return res.send(tutor);
         }
       } catch (error) {
@@ -201,6 +204,96 @@ async function run() {
       const tutor = await tutorCollection.deleteOne(query);
       res.send(tutor);
     });
+
+
+
+
+    // Tutor Rating SetUp
+
+    app.post('/tutor/rating', async (req, res) => {
+      const { userId, tutorId, rating } = req.body;
+
+      const existing = await tutorRatingCollection.findOne({ tutorId, userId });
+
+      if (existing) {
+        return res.status(200).json({ message: "data already exist." });
+      }
+
+      const tutorRating = await tutorRatingCollection.insertOne({ userId, tutorId, rating });
+      res.send(tutorRating);
+    });
+
+
+
+    app.get('/rating', async (req, res) => {
+      const { tutorId } = req.query;
+
+      if (tutorId) {
+        const result = await tutorRatingCollection.find({ tutorId }).toArray();
+        return res.send(result);
+      }
+      res.status(200).json({ success: true, message: "No Data Found!", data: [] })
+    });
+
+    app.get("/tutor/rating", async (req, res) => {
+      const { tutorId, userId } = req.query;
+
+      const result = await tutorRatingCollection.findOne({
+        tutorId,
+        userId,
+      });
+
+      res.send(result);
+    });
+
+    app.patch('/tutor/rating', async (req, res) => {
+      try {
+        const { tutorId, userId, rating } = req.body;
+
+        const existing = await tutorRatingCollection.findOne({
+          tutorId,
+          userId,
+        });
+
+        if (!existing) {
+          return res.status(404).json({
+            message: "Rating not found",
+          });
+        }
+
+        if (existing.rating === Number(rating)) {
+          return res.status(400).json({
+            message: "Cannot update same rating!",
+          });
+        }
+
+        const result = await tutorRatingCollection.updateOne(
+          {
+            tutorId,
+            userId,
+          },
+          {
+            $set: {
+              rating: Number(rating),
+            },
+          }
+        );
+
+        res.status(200).json({
+          message: "Rating updated",
+          result,
+        });
+
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({
+          message: "Something went wrong!",
+        });
+      }
+    });
+
+
+
 
     // Booked Tutor Collection
     app.post('/bookedTutor', async (req, res) => {
